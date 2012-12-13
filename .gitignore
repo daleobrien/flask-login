@@ -1,7 +1,7 @@
 *.pyc
-+.DS_Store
-+*egg/*
-+*egg-info/*
-+*.swp
-+build/*
-+dist/*
+.DS_Store
+*egg/*
+*egg-info/*
+*.sw?
+build/*
+dist/*
