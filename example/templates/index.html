@@ -4,11 +4,9 @@
 <h2>Welcome</h2>
 
 {% if current_user.is_authenticated() %}
-<p>You are authorized to access <a href="{{ url_for('secret') }}">the secret information</a>.</p>
+<p>You are authorized to access <a href="{{ url_for('secret') }}">the secret information</a>.
 {% else %}
 <p>This Web site contains secret information available only to authorized users.
-Available usernames are:</p>
-    <ul><li>Notch</li><li>Steve</li><li>Creeper</li></ul>
-<p>They all have the same password, "<b>password</b>".</p>
+Available usernames are Notch, Steve, and Creeper.
 {% endif %}
 {% endblock body %}
