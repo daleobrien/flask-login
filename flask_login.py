@@ -10,7 +10,6 @@ users in and out in a database-independent manner.
 :license:   MIT/X11, see LICENSE for more details.
 """
 import hmac
-from bcrypt import hashpw, gensalt
 from datetime import datetime, timedelta
 from flask import (current_app, session, _request_ctx_stack, redirect, url_for,
                    request, flash, abort)
@@ -28,24 +27,22 @@ def _get_user():
     return getattr(_request_ctx_stack.top, "user", None)
 
 
-def _cookie_digest(payload, salt=None):
-
-    if salt is None:
-        salt = gensalt(log_rounds=13)
-
+def _cookie_digest(payload, key=None):
+    if key is None:
+        key = current_app.config["SECRET_KEY"]
     payload = payload.encode("utf8")
+    mac = hmac.new(key, payload, sha1)
+    return mac.hexdigest()
 
-    return hashpw(payload, salt)
 
-
-def encode_cookie(payload, salt=None):
+def encode_cookie(payload):
     """
     This will encode a `unicode` value into a cookie, and sign that cookie
     with the app's secret key.
 
     :param payload: The value to encode, as `unicode`.
     """
-    return u"%s|%s" % (payload, _cookie_digest(payload, salt))
+    return u"%s|%s" % (payload, _cookie_digest(payload))
 
 
 def decode_cookie(cookie):
@@ -60,15 +57,10 @@ def decode_cookie(cookie):
         digest = digest.encode("ascii")
     except ValueError:
         return None
-
-    try:
-        if hashpw(payload, digest) == digest:
-            return payload
-    except ValueError:
-        # the digest was invalid
-        pass
-
-    return None
+    if _cookie_digest(payload) == digest:
+        return payload
+    else:
+        return None
 
 
 def make_next_param(login, current):

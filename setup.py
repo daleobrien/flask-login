@@ -34,8 +34,7 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'Flask',
-        'py-bcrypt'
+        'Flask'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
