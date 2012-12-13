@@ -9,10 +9,10 @@ anything related to unittest.
 :license:   MIT/X11, see LICENSE for more details.
 """
 from __future__ import with_statement
-from attest import Tests, raises, assert_hook
+from attest import Tests, raises
 from contextlib import contextmanager
 import json
-from flask import (Flask, session, get_flashed_messages, url_for, request,
+from flask import (Flask, session, get_flashed_messages, request,
                    signals_available)
 from flask.views import MethodView
 from flask.ext.login import (
@@ -20,7 +20,7 @@ from flask.ext.login import (
     login_user, logout_user, current_user, login_required, LoginRequiredMixin,
     LOGIN_MESSAGE, confirm_login, UserMixin, AnonymousUser, make_secure_token,
     user_logged_in, user_logged_out, user_loaded_from_cookie,
-    user_login_confirmed,  user_unauthorized, user_needs_refresh,
+    user_login_confirmed,  user_unauthorized,
     session_protected, fresh_login_required, _create_identifier
 )
 from werkzeug.exceptions import Unauthorized
@@ -127,8 +127,9 @@ def app_context():
 
 @login.test
 def cookie_encoding(app):
-    COOKIE = u"1|7d276051c1eec578ed86f6b8478f7f7d803a7970"
-    assert encode_cookie(u"1") == COOKIE
+    salt = "$2a$13$ZVek4G70/.X2sMTTZD1Khuj6bOt2N9P4XDIppFuU4XdDJF.mhHe5i"
+    COOKIE = u"1|%s" % salt
+    assert encode_cookie(u"1", salt=salt) == COOKIE
     assert decode_cookie(COOKIE) == u"1"
     assert decode_cookie(u"Foo|BAD_HASH") is None
     assert decode_cookie(u"no bar") is None
@@ -293,14 +294,14 @@ def inactive_interactive(app):
 def remember_interactive(app):
     setup_interactive(app)
     with app.test_client() as c:
-        COOKIE = u"1|7d276051c1eec578ed86f6b8478f7f7d803a7970"
         rv = c.get("/login", query_string={"id": 1, "remember": "yes"})
         assert rv.data == u"Logged in"
         assert session["user_id"] == u"1"
         assert session["_fresh"] is True
         cookies = get_cookies(rv)
         assert "remember_token" in cookies
-        assert cookies["remember_token"] == COOKIE
+        # Can't test the cookie, as it changes each time
+        #assert cookies["remember_token"] == COOKIE
         # testing remembrance
         c.cookie_jar.clear_session_cookies()
         rv = c.get("/protected")
@@ -341,7 +342,6 @@ def auth_token_interactive(app):
         assert session["user_id"] == u"1"
         assert session["_fresh"] is True
         cookies = get_cookies(rv)
-        print cookies
         assert "remember_token" in cookies
         assert cookies["remember_token"] == notch.get_auth_token()
         # testing remembrance
